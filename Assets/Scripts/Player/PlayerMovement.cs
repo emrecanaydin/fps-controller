@@ -10,6 +10,8 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Movement")]
     public float moveSpeed;
+    public float defaultMoveSpeed;
+    public bool isRunning;
 
 
     [Header("Jumping")]
@@ -29,12 +31,14 @@ public class PlayerMovement : MonoBehaviour
 
     private void Start()
     {
+        defaultMoveSpeed = moveSpeed;
         characterController = GetComponent<CharacterController>();
     }
 
     void Update()
     {
         Movement();
+        Run();
         Gravity();
         Jump();
         Leaning();
@@ -55,8 +59,25 @@ public class PlayerMovement : MonoBehaviour
     {
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
-        Vector3 move = transform.right * horizontal + transform.forward * vertical;
-        characterController.Move(move * moveSpeed * Time.deltaTime);
+        if (!isLeaning)
+        {
+            Vector3 move = transform.right * horizontal + transform.forward * vertical;
+            characterController.Move(move * moveSpeed * Time.deltaTime);
+        }
+    }
+
+    private void Run()
+    {
+        if (Input.GetKey(KeyCode.LeftShift) && !isRunning)
+        {
+            isRunning = true;
+            moveSpeed = moveSpeed * 1.50f;
+        }
+        if (Input.GetKeyUp(KeyCode.LeftShift))
+        {
+            isRunning = false;
+            moveSpeed = defaultMoveSpeed;
+        }
     }
 
     private void Jump()
