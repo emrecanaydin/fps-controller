@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -9,9 +10,14 @@ public class PlayerMovement : MonoBehaviour
     Vector3 velocity;
 
     [Header("Movement")]
+    float defaultMoveSpeed;
     public float moveSpeed;
-    public float defaultMoveSpeed;
     public bool isRunning;
+    public List<AudioClip> walkingSounds = new List<AudioClip>();
+    public List<AudioClip> runningSounds = new List<AudioClip>();
+    public List<AudioClip> jumpingSounds = new List<AudioClip>();
+    float movementSoundsTimer;
+    AudioSource audioSource;
 
 
     [Header("Jumping")]
@@ -33,6 +39,7 @@ public class PlayerMovement : MonoBehaviour
     {
         defaultMoveSpeed = moveSpeed;
         characterController = GetComponent<CharacterController>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     void Update()
@@ -48,21 +55,26 @@ public class PlayerMovement : MonoBehaviour
     {
         isGrounded = Physics.CheckSphere(groundChecker.position, groundDistance, groundMask);
         velocity.y += gravity * Time.deltaTime;
-        characterController.Move(velocity * Time.deltaTime);
         if (isGrounded && velocity.y < 0)
         {
             velocity.y = 0;
         }
+        characterController.Move(velocity * Time.deltaTime);
     }
 
     private void Movement()
     {
         float horizontal = Input.GetAxis("Horizontal");
         float vertical = Input.GetAxis("Vertical");
-        if (!isLeaning)
+        if (isLeaning)
         {
-            Vector3 move = transform.right * horizontal + transform.forward * vertical;
-            characterController.Move(move * moveSpeed * Time.deltaTime);
+            return;
+        }
+        Vector3 move = transform.right * horizontal + transform.forward * vertical;
+        characterController.Move(move * moveSpeed * Time.deltaTime);
+        if(move != Vector3.zero && isGrounded)
+        {
+            MovementSounds();
         }
     }
 
@@ -71,12 +83,14 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetKey(KeyCode.LeftShift) && !isRunning)
         {
             isRunning = true;
-            moveSpeed = moveSpeed * 1.50f;
+            DOTween.To(() => moveSpeed, x => moveSpeed = x, moveSpeed * 1.5f, 2);
+            //moveSpeed = moveSpeed * 1.50f;
         }
         if (Input.GetKeyUp(KeyCode.LeftShift))
         {
             isRunning = false;
-            moveSpeed = defaultMoveSpeed;
+            DOTween.To(() => moveSpeed, x => moveSpeed = x, defaultMoveSpeed, 2);
+            //moveSpeed = defaultMoveSpeed;
         }
     }
 
@@ -85,6 +99,7 @@ public class PlayerMovement : MonoBehaviour
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
             velocity.y = Mathf.Sqrt(jumpHeight * -3f * gravity);
+            audioSource.PlayOneShot(jumpingSounds[Random.Range(0, jumpingSounds.Count)]);
         }
     }
 
@@ -105,6 +120,23 @@ public class PlayerMovement : MonoBehaviour
             zRotation = Mathf.Lerp(zRotation, 0f, leaningSmooth * Time.deltaTime);
         }
         leaner.localRotation = Quaternion.Euler(0, 0, zRotation);
+    }
+
+    private void MovementSounds()
+    {
+        movementSoundsTimer -= Time.deltaTime;
+        if(movementSoundsTimer <= 0)
+        {
+            if (isRunning)
+            {
+                audioSource.PlayOneShot(runningSounds[Random.Range(0, runningSounds.Count)]);
+                movementSoundsTimer = .5f;
+            } else
+            {
+                audioSource.PlayOneShot(walkingSounds[Random.Range(0, walkingSounds.Count)]);
+                movementSoundsTimer = .6f;
+            }
+        }
     }
 
 }
