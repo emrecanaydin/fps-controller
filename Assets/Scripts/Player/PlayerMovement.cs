@@ -22,7 +22,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Jumping")]
     public float gravity;
-    public float jumpHeight;
+    public float jumpForce;
     public float groundDistance;
     public LayerMask groundMask;
     public Transform groundChecker;
@@ -98,7 +98,8 @@ public class PlayerMovement : MonoBehaviour
     {
         if (Input.GetButtonDown("Jump") && isGrounded)
         {
-            velocity.y = Mathf.Sqrt(jumpHeight * -3f * gravity);
+            //velocity.y = Mathf.Sqrt(jumpHeight * -3f * gravity);
+            velocity.y = jumpForce;
             audioSource.PlayOneShot(jumpingSounds[Random.Range(0, jumpingSounds.Count)]);
         }
     }
